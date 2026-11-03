@@ -1,22 +1,10 @@
-import sqlite3
-from pathlib import Path
-from contextlib import contextmanager
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from config.settings import DATABASE_URL
 
-BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "monitoramento.db"
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True
+)
 
-
-@contextmanager
-def get_connection():
-    conexao = sqlite3.connect(DB_PATH)
-
-    try:
-        yield conexao
-        conexao.commit()
-
-    except Exception:
-        conexao.rollback()
-        raise
-
-    finally:
-        conexao.close()
+SessionLocal = sessionmaker(bind=engine)
