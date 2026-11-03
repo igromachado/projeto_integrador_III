@@ -14,7 +14,7 @@ st_autorefresh(
     key="atualizacao"
 )
 
-url = "http://10.107.67.92:8080/maquinas"
+url = "http://10.12.22.92:8080/maquinas"
 
 try:
     resposta = requests.get(url, timeout=10)

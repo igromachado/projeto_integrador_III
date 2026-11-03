@@ -5,7 +5,7 @@ import json
 import time
 from datetime import datetime, timezone
 
-API_URL = "http://10.107.67.92:8080/maquinas"
+API_URL = "http://10.12.22.92:8080/maquinas"
 DB_PATH = "monitoramento.db"
 
 

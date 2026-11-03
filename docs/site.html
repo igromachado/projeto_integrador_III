@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -457,6 +458,79 @@
       .api-base, .api-warning { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     }
 
+  
+    .criteria-note {
+      margin: 18px 0 24px;
+      padding: 16px 19px;
+      border-left: 4px solid var(--blue);
+      border-radius: 0 9px 9px 0;
+      background: var(--blue-soft);
+      color: var(--navy);
+    }
+    .criteria-note p { margin: 7px 0 0; }
+    .machine-criteria {
+      margin: 22px 0 28px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      break-inside: avoid;
+    }
+    .machine-criteria h4 {
+      margin: 0 0 8px;
+      color: var(--navy);
+      font-size: 1.05rem;
+    }
+    .criteria-description {
+      margin: 0 0 14px;
+      color: var(--muted);
+    }
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin: 14px 0;
+    }
+    .criteria-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .9rem;
+    }
+    .criteria-table th,
+    .criteria-table td {
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    .criteria-table th {
+      background: var(--soft);
+      color: var(--navy);
+      font-weight: 700;
+    }
+    .criteria-table tbody tr:nth-child(even) { background: #fafbfd; }
+    .state {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: .78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .state.normal { color: #166534; background: #dcfce7; }
+    .state.attention { color: #92400e; background: #fef3c7; }
+    .state.critical { color: #991b1b; background: #fee2e2; }
+    .state.maintenance { color: #5b21b6; background: #ede9fe; }
+    @media (max-width: 700px) {
+      .machine-criteria { padding: 14px; }
+      .criteria-table { min-width: 560px; }
+    }
+    @media print {
+      .criteria-note, .state { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .machine-criteria { break-inside: avoid; }
+      .table-wrap { overflow: visible; }
+      .criteria-table { font-size: 8.5pt; }
+    }
+
   </style>
 </head>
 <body>
@@ -487,6 +561,7 @@
         <a href="#requisitos">05. Requisitos gerais</a>
         <a href="#resultados">06. Resultados esperados</a>
         <a href="#documentacao-api">07. Documentação da API</a>
+          <a href="#criterios-industriais">08. Critérios industriais</a>
       </nav>
     </aside>
 
@@ -829,6 +904,234 @@ Content-Type: application/json
 
           <div class="api-warning">
             <strong>Importante — dados temporários:</strong> a API mantém as leituras apenas em memória e pode apagá-las periodicamente. A equipe não deve depender da API como armazenamento permanente. É necessário coletar e persistir os registros antes que sejam removidos. Ajuste a frequência de coleta ao intervalo real de geração das leituras e à rotina de limpeza do servidor.
+          </div>
+        </section>
+
+
+        <section class="section" id="criterios-industriais">
+          <span class="section-number">Seção 08</span>
+          <h2 class="section-title">Critérios e regras de negócio industriais</h2>
+
+          <p class="lead">A solução deverá interpretar as leituras recebidas das seis ESP32, avaliar as condições operacionais de cada equipamento e transformar os dados em indicadores, alertas e informações para tomada de decisão.</p>
+
+          <div class="criteria-note">
+            <strong>Orientação para as equipes:</strong>
+            <p>Os limites apresentados nesta seção são referências didáticas para a simulação deste projeto. Não representam limites de segurança ou especificações de fabricantes de máquinas reais. A equipe deverá implementar as regras no sistema, documentar as decisões e justificar eventuais ajustes com base no comportamento observado nos dados.</p>
+          </div>
+
+          <h3>1. Regras específicas por máquina</h3>
+          <p>As condições devem ser avaliadas individualmente para cada equipamento. Quando um indicador atingir uma faixa de maior criticidade, o sistema deverá registrar a condição e apresentar o alerta correspondente.</p>
+
+          <div class="machine-criteria">
+            <h4>1.1. Torno CNC — TORNO_CNC_01</h4>
+            <p class="criteria-description">Acompanhar principalmente o desgaste progressivo, a temperatura, a vibração e a redução da rotação.</p>
+            <div class="table-wrap">
+              <table class="criteria-table">
+                <thead><tr><th>Indicador</th><th>Condição</th><th>Classificação</th></tr></thead>
+                <tbody>
+                  <tr><td>Temperatura</td><td>Até 62 °C</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Temperatura</td><td>Acima de 62 °C até 67 °C</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Temperatura</td><td>Acima de 67 °C</td><td><span class="state critical">Crítico</span></td></tr>
+                  <tr><td>Vibração</td><td>Até 2,8 mm/s</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Vibração</td><td>Acima de 2,8 até 3,6 mm/s</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Vibração</td><td>Acima de 3,6 mm/s</td><td><span class="state critical">Crítico</span></td></tr>
+                  <tr><td>Rotação</td><td>Abaixo de 2.900 RPM</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Rotação</td><td>Abaixo de 2.750 RPM</td><td><span class="state critical">Crítico</span></td></tr>
+                  <tr><td>Desgaste</td><td>Acima de 60%</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Desgaste</td><td>Acima de 85%</td><td><span class="state critical">Crítico</span></td></tr>
+                  <tr><td>Desgaste</td><td>Acima de 90%</td><td><span class="state maintenance">Manutenção</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p><strong>Indicadores que deverão ser calculados:</strong> taxa de defeitos em relação à produção, produção por intervalo, variação da rotação e evolução do desgaste.</p>
+          </div>
+
+          <div class="machine-criteria">
+            <h4>1.2. Prensa hidráulica — PRENSA_HIDRAULICA_01</h4>
+            <p class="criteria-description">Acompanhar a pressão hidráulica, a temperatura, a vibração, os ciclos e a qualidade das peças produzidas.</p>
+            <div class="table-wrap">
+              <table class="criteria-table">
+                <thead><tr><th>Indicador</th><th>Condição</th><th>Classificação</th></tr></thead>
+                <tbody>
+                  <tr><td>Pressão</td><td>Acima de 135 bar</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Pressão</td><td>Abaixo de 135 até 125 bar</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Pressão</td><td>Abaixo de 125 bar</td><td><span class="state critical">Crítico</span></td></tr>
+                  <tr><td>Temperatura</td><td>Até 62 °C</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Temperatura</td><td>Acima de 62 até 66 °C</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Temperatura</td><td>Acima de 66 °C</td><td><span class="state critical">Crítico</span></td></tr>
+                  <tr><td>Vibração</td><td>Até 2,5 mm/s</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Vibração</td><td>Acima de 2,5 até 3,3 mm/s</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Vibração</td><td>Acima de 3,3 mm/s</td><td><span class="state critical">Crítico</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p><strong>Indicadores que deverão ser calculados:</strong> taxa de defeitos por ciclo, produção aprovada, total de ciclos e relação entre pressão e quantidade de defeitos.</p>
+          </div>
+
+          <div class="machine-criteria">
+            <h4>1.3. Esteira transportadora — ESTEIRA_01</h4>
+            <p class="criteria-description">Acompanhar a carga transportada, a velocidade, a temperatura, a vibração e as paradas operacionais.</p>
+            <div class="table-wrap">
+              <table class="criteria-table">
+                <thead><tr><th>Indicador</th><th>Condição</th><th>Classificação</th></tr></thead>
+                <tbody>
+                  <tr><td>Carga</td><td>Até 85%</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Carga</td><td>Acima de 85% até 92%</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Carga</td><td>Acima de 92%</td><td><span class="state critical">Crítico</span></td></tr>
+                  <tr><td>Velocidade</td><td>A partir de 1,7 m/s</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Velocidade</td><td>Abaixo de 1,7 m/s</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Velocidade</td><td>Abaixo de 1,55 m/s</td><td><span class="state critical">Crítico</span></td></tr>
+                  <tr><td>Temperatura</td><td>Até 44 °C</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Temperatura</td><td>Acima de 44 até 47 °C</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Temperatura</td><td>Acima de 47 °C</td><td><span class="state critical">Crítico</span></td></tr>
+                  <tr><td>Vibração</td><td>Até 3,0 mm/s</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Vibração</td><td>Acima de 3,0 até 3,6 mm/s</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Vibração</td><td>Acima de 3,6 mm/s</td><td><span class="state critical">Crítico</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p><strong>Indicadores que deverão ser calculados:</strong> quantidade de paradas, horas de operação, disponibilidade (quando houver dados de tempo de parada) e relação entre carga e velocidade.</p>
+          </div>
+
+          <div class="machine-criteria">
+            <h4>1.4. Robô de soldagem — ROBO_SOLDAGEM_01</h4>
+            <p class="criteria-description">Acompanhar a temperatura do processo, a corrente elétrica, os ciclos, as rejeições e as falhas.</p>
+            <div class="table-wrap">
+              <table class="criteria-table">
+                <thead><tr><th>Indicador</th><th>Condição</th><th>Classificação</th></tr></thead>
+                <tbody>
+                  <tr><td>Temperatura</td><td>Até 75 °C</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Temperatura</td><td>Acima de 75 até 85 °C</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Temperatura</td><td>Acima de 85 °C</td><td><span class="state critical">Crítico</span></td></tr>
+                  <tr><td>Corrente</td><td>Entre 16,5 e 20 A (inclusive)</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Corrente</td><td>Abaixo de 16,5 A ou acima de 20 A</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Falhas acumuladas</td><td>Até 2</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Falhas acumuladas</td><td>De 3 a 5</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Falhas acumuladas</td><td>Acima de 5</td><td><span class="state maintenance">Manutenção</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p><strong>Indicadores que deverão ser calculados:</strong> percentual de peças rejeitadas por ciclo, taxa de falhas por hora de operação e relação entre temperatura, corrente e rejeições.</p>
+          </div>
+
+          <div class="machine-criteria">
+            <h4>1.5. Compressor industrial — COMPRESSOR_01</h4>
+            <p class="criteria-description">Acompanhar a pressão, a temperatura, a vibração, o consumo energético, as horas de operação e o desgaste.</p>
+            <div class="table-wrap">
+              <table class="criteria-table">
+                <thead><tr><th>Indicador</th><th>Condição</th><th>Classificação</th></tr></thead>
+                <tbody>
+                  <tr><td>Pressão</td><td>Acima de 7,5 bar</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Pressão</td><td>Abaixo de 7,5 até 6,5 bar</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Pressão</td><td>Abaixo de 6,5 bar</td><td><span class="state critical">Crítico</span></td></tr>
+                  <tr><td>Temperatura</td><td>Até 75 °C</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Temperatura</td><td>Acima de 75 até 85 °C</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Temperatura</td><td>Acima de 85 °C</td><td><span class="state critical">Crítico</span></td></tr>
+                  <tr><td>Vibração</td><td>Até 4,0 mm/s</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Vibração</td><td>Acima de 4,0 até 5,5 mm/s</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Vibração</td><td>Acima de 5,5 mm/s</td><td><span class="state maintenance">Manutenção</span></td></tr>
+                  <tr><td>Desgaste</td><td>Acima de 60%</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Desgaste</td><td>Acima de 85%</td><td><span class="state critical">Crítico</span></td></tr>
+                  <tr><td>Consumo energético</td><td>Acima de 8,0 kW</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Consumo energético</td><td>Acima de 8,8 kW</td><td><span class="state critical">Crítico</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p><strong>Indicadores que deverão ser calculados:</strong> consumo por hora de operação, evolução do desgaste, taxa de falhas e relação entre vibração, temperatura e consumo.</p>
+          </div>
+
+          <div class="machine-criteria">
+            <h4>1.6. Embaladora — EMBALADORA_01</h4>
+            <p class="criteria-description">Acompanhar a velocidade da linha, a temperatura, a produção, as rejeições e as falhas.</p>
+            <div class="table-wrap">
+              <table class="criteria-table">
+                <thead><tr><th>Indicador</th><th>Condição</th><th>Classificação</th></tr></thead>
+                <tbody>
+                  <tr><td>Velocidade</td><td>Entre 25 e 35</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Velocidade</td><td>Acima de 35 até 38</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Velocidade</td><td>Acima de 38</td><td><span class="state critical">Crítico</span></td></tr>
+                  <tr><td>Velocidade reduzida</td><td>Abaixo de 25</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Temperatura</td><td>Até 48 °C</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Temperatura</td><td>Acima de 48 até 50 °C</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Temperatura</td><td>Acima de 50 °C</td><td><span class="state critical">Crítico</span></td></tr>
+                  <tr><td>Falhas acumuladas</td><td>Até 2</td><td><span class="state normal">Normal</span></td></tr>
+                  <tr><td>Falhas acumuladas</td><td>De 3 a 4</td><td><span class="state attention">Atenção</span></td></tr>
+                  <tr><td>Falhas acumuladas</td><td>5 ou mais</td><td><span class="state maintenance">Manutenção</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p><strong>Indicadores que deverão ser calculados:</strong> taxa de rejeição, produção por intervalo, falhas por hora e relação entre velocidade, temperatura e qualidade.</p>
+          </div>
+
+          <h3>2. Regras gerais para todas as máquinas</h3>
+          <p>Além das regras individuais, o sistema deverá aplicar critérios comuns para consolidar a situação operacional da indústria.</p>
+          <div class="table-wrap">
+            <table class="criteria-table">
+              <thead><tr><th>Critério</th><th>Regra de negócio</th><th>Comportamento esperado</th></tr></thead>
+              <tbody>
+                <tr><td>Máquina crítica</td><td>Um ou mais indicadores atingem a faixa crítica.</td><td>Destacar a máquina no painel e gerar alerta de criticidade alta ou crítica.</td></tr>
+                <tr><td>Manutenção</td><td>Status recebido igual a MANUTENCAO ou regra de manutenção atingida.</td><td>Exibir a necessidade de intervenção e registrar a ocorrência.</td></tr>
+                <tr><td>Máquina parada</td><td>Status recebido igual a PARADA.</td><td>Registrar o início da parada e acompanhar sua duração.</td></tr>
+                <tr><td>Falta de comunicação</td><td>Sem nova leitura por mais de 15 segundos.</td><td>Marcar como sem comunicação e registrar o horário da última leitura.</td></tr>
+                <tr><td>Produção abaixo da meta</td><td>Produção do período abaixo de 70% da meta cadastrada.</td><td>Gerar alerta de produtividade e apresentar a diferença para a meta.</td></tr>
+                <tr><td>Taxa elevada de defeitos/rejeições</td><td>Percentual superior a 5% no período analisado.</td><td>Gerar alerta de qualidade e identificar o equipamento.</td></tr>
+                <tr><td>Dados inconsistentes</td><td>Valor negativo indevido, campo obrigatório ausente ou tipo inválido.</td><td>Rejeitar ou colocar o registro em quarentena, mantendo evidência do problema.</td></tr>
+                <tr><td>Leitura duplicada</td><td>Mesmo identificador de leitura recebido mais de uma vez.</td><td>Impedir duplicação no armazenamento.</td></tr>
+                <tr><td>Histórico de criticidade</td><td>Indicador muda de normal para atenção/crítico ou retorna ao normal.</td><td>Registrar início, fim, duração e valores associados à ocorrência.</td></tr>
+                <tr><td>Recorrência</td><td>O mesmo problema permanece em leituras consecutivas.</td><td>Atualizar a ocorrência existente em vez de criar alertas repetidos a cada coleta.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>3. Indicadores calculados obrigatórios</h3>
+          <p>Os indicadores abaixo não são enviados prontos pelas ESP32. A equipe deverá calculá-los a partir das leituras armazenadas. Os cálculos devem considerar o período selecionado e evitar divisão por zero.</p>
+          <div class="table-wrap">
+            <table class="criteria-table">
+              <thead><tr><th>Indicador</th><th>Fórmula / regra</th><th>Observação</th></tr></thead>
+              <tbody>
+                <tr><td>Taxa de defeitos</td><td>(Defeitos ÷ produção total) × 100</td><td>Para a prensa, considerar os ciclos como total de peças processadas.</td></tr>
+                <tr><td>Taxa de rejeição</td><td>(Rejeitados ÷ total processado) × 100</td><td>Para robô e embaladora, definir claramente o total processado e documentar o critério.</td></tr>
+                <tr><td>Produção média</td><td>Produção do período ÷ quantidade de intervalos</td><td>Não confundir produção acumulada com produção gerada em cada intervalo.</td></tr>
+                <tr><td>Temperatura média</td><td>Soma das temperaturas ÷ quantidade de leituras</td><td>Calcular por máquina e por período.</td></tr>
+                <tr><td>Vibração máxima</td><td>Maior valor de vibração no período</td><td>Aplicável às máquinas que enviam esse campo.</td></tr>
+                <tr><td>Consumo por hora</td><td>Energia consumida ÷ horas de operação</td><td>Aplicável ao compressor; a equipe deverá esclarecer se o valor recebido representa potência ou energia.</td></tr>
+                <tr><td>Disponibilidade</td><td>(Tempo operando ÷ tempo planejado) × 100</td><td>Exige registrar horários e duração das paradas.</td></tr>
+                <tr><td>Taxa de falhas</td><td>Quantidade de falhas ÷ horas de operação</td><td>Apresentar a unidade utilizada, por exemplo, falhas por hora.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>4. Regras avançadas de diagnóstico e análise</h3>
+          <div class="table-wrap">
+            <table class="criteria-table">
+              <thead><tr><th>Desafio</th><th>Requisito</th></tr></thead>
+              <tbody>
+                <tr><td>Diagnóstico combinado</td><td>Identificar situações em que dois ou mais indicadores da mesma máquina estejam simultaneamente em atenção ou criticidade.</td></tr>
+                <tr><td>Análise de tendência</td><td>Detectar aumento ou redução progressiva de indicadores, comparando janelas de tempo.</td></tr>
+                <tr><td>Comparação entre máquinas</td><td>Comparar produtividade, rejeições, falhas e condições operacionais sem misturar indicadores incompatíveis.</td></tr>
+                <tr><td>Ranking operacional</td><td>Apresentar rankings de produtividade e de ocorrências, explicando os critérios usados.</td></tr>
+                <tr><td>Manutenção preventiva</td><td>Sugerir inspeção com base em desgaste, horas de operação, falhas e histórico de alertas.</td></tr>
+                <tr><td>Estimativa de desgaste</td><td>Quando houver dados históricos suficientes, estimar a tendência de aproximação de um limite e apresentar as limitações da estimativa.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>5. Requisitos mínimos para implementação</h3>
+          <ul class="check-list">
+            <li>Implementar no backend as regras de classificação de cada máquina, sem depender exclusivamente do status informado pela ESP32.</li>
+            <li>Manter os limites e critérios organizados de forma que possam ser alterados sem reescrever toda a aplicação.</li>
+            <li>Armazenar o histórico das leituras e das ocorrências, preservando a data e hora de cada evento.</li>
+            <li>Evitar alertas duplicados enquanto uma mesma condição permanecer ativa.</li>
+            <li>Permitir consultar alertas ativos, resolvidos e recorrentes.</li>
+            <li>Apresentar no painel o valor observado, o limite aplicado, a máquina e a justificativa do alerta.</li>
+            <li>Documentar fórmulas, unidades de medida, limites adotados e decisões de implementação.</li>
+            <li>Testar as regras com valores normais, valores exatamente no limite e valores acima/abaixo dos limites.</li>
+          </ul>
+
+          <div class="criteria-note">
+            <strong>Atenção à interpretação dos dados:</strong>
+            <p>Os contadores de produção, ciclos, defeitos, rejeitados, falhas e paradas enviados pelas ESP32 são acumulados desde a inicialização do programa. Para obter produção ou ocorrências por período, a equipe deverá comparar leituras sucessivas ou calcular diferenças entre os valores acumulados. Também deverá considerar reinicializações da ESP32, que podem zerar contadores e desgaste.</p>
+            <p>Os campos disponíveis variam entre máquinas. A ausência de um indicador em determinado equipamento não deve ser tratada automaticamente como valor zero.</p>
           </div>
         </section>
 

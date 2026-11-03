@@ -2,7 +2,7 @@
 import requests
 import json
 
-API_URL = "http://10.107.67.92:8080/maquinas"
+API_URL = "http://10.12.22.92:8080/maquinas"
 
 try:
     resposta = requests.get(API_URL, timeout=10)
