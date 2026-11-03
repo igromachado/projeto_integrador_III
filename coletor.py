@@ -4,13 +4,18 @@ import sqlite3
 import json
 import time
 from datetime import datetime, timezone
+from pathlib import Path
+from database.connection import get_connection
+
+
+BASE_DIR = Path(__file__).resolve().parent
+DB_PATH = BASE_DIR / "database" / "monitoramento.db"
 
 API_URL = "http://10.12.22.92:8080/maquinas"
-DB_PATH = "monitoramento.db"
 
 
 def criar_tabela():
-    with sqlite3.connect(DB_PATH) as conexao:
+    with get_connection() as conexao:
         conexao.execute("""
             CREATE TABLE IF NOT EXISTS leituras (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

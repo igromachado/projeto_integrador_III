@@ -9,12 +9,13 @@ import plotly.express as px
 import streamlit as st
 
 from rules.regras_industriais import avaliar_maquinas
+from database.connection import get_connection
 
 
 # Mantém o banco no mesmo diretório deste arquivo, independentemente
 # de qual pasta o terminal estiver usando ao iniciar o Streamlit.
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "monitoramento.db"
+DB_PATH = BASE_DIR / 'database' / "monitoramento.db"
 
 st.set_page_config(
     page_title="Monitoramento Industrial",
@@ -33,7 +34,7 @@ def carregar_dados(caminho_banco: str, ultima_atualizacao: int) -> pd.DataFrame:
     if not caminho.exists():
         return pd.DataFrame()
 
-    with sqlite3.connect(caminho) as conexao:
+    with get_connection() as conexao:
         tabelas = pd.read_sql_query(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='leituras'",
             conexao

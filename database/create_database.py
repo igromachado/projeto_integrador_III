@@ -1,11 +1,8 @@
-
-import sqlite3
-
-DB_PATH = "monitoramento.db"
+from database.connection import get_connection
 
 
 def criar_banco():
-    with sqlite3.connect(DB_PATH) as conexao:
+    with get_connection() as conexao:
         conexao.execute("""
             CREATE TABLE IF NOT EXISTS leituras (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -19,7 +16,6 @@ def criar_banco():
                 status TEXT,
                 coletado_em TEXT NOT NULL,
                 dados_json TEXT NOT NULL,
-
                 UNIQUE (id_api, timestamp_api, maquina)
             )
         """)
@@ -29,4 +25,3 @@ def criar_banco():
 
 if __name__ == "__main__":
     criar_banco()
-
