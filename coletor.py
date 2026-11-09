@@ -1,37 +1,44 @@
-
 import requests
-import sqlite3
 import json
 import time
+
 from datetime import datetime, timezone
-from pathlib import Path
-from database.connection import get_connection
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+
+from database.connection import engine
 
 
-BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "database" / "monitoramento.db"
-
-API_URL = "http://10.12.22.92:8080/maquinas"
+API_URL = "http://10.224.74.92:8080/maquinas"
 
 
 def criar_tabela():
-    with get_connection() as conexao:
-        conexao.execute("""
-            CREATE TABLE IF NOT EXISTS leituras (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                id_api INTEGER,
-                timestamp_api TEXT,
-                maquina TEXT NOT NULL,
-                temperatura REAL,
-                vibracao REAL,
-                pressao REAL,
-                producao REAL,
-                status TEXT,
-                coletado_em TEXT NOT NULL,
-                dados_json TEXT NOT NULL,
-                UNIQUE (id_api, timestamp_api, maquina)
+    """Cria a tabela de leituras caso ainda não exista."""
+
+    query = text("""
+        CREATE TABLE IF NOT EXISTS leituras (
+            id BIGINT AUTO_INCREMENT PRIMARY KEY,
+            id_api BIGINT,
+            timestamp_api VARCHAR(50),
+            maquina VARCHAR(100) NOT NULL,
+            temperatura DOUBLE,
+            vibracao DOUBLE,
+            pressao DOUBLE,
+            producao DOUBLE,
+            status VARCHAR(50),
+            coletado_em DATETIME NOT NULL,
+            dados_json LONGTEXT NOT NULL,
+
+            UNIQUE KEY uk_leitura (
+                id_api,
+                timestamp_api,
+                maquina
             )
-        """)
+        )
+    """)
+
+    with engine.begin() as conexao:
+        conexao.execute(query)
 
 
 def coletar_dados():
@@ -46,52 +53,71 @@ def coletar_dados():
     if not isinstance(dados, list):
         raise ValueError("A API não retornou uma lista de leituras.")
 
-    coletado_em = datetime.now(timezone.utc).isoformat(
-        timespec="seconds"
-    )
+    # MySQL DATETIME recebe um datetime sem informação de fuso.
+    coletado_em = datetime.now(timezone.utc).replace(tzinfo=None)
 
     inseridos = 0
     duplicados = 0
 
-    with sqlite3.connect(DB_PATH) as conexao:
+    query = text("""
+        INSERT IGNORE INTO leituras (
+            id_api,
+            timestamp_api,
+            maquina,
+            temperatura,
+            vibracao,
+            pressao,
+            producao,
+            status,
+            coletado_em,
+            dados_json
+        )
+        VALUES (
+            :id_api,
+            :timestamp_api,
+            :maquina,
+            :temperatura,
+            :vibracao,
+            :pressao,
+            :producao,
+            :status,
+            :coletado_em,
+            :dados_json
+        )
+    """)
+
+    with engine.begin() as conexao:
+
         for leitura in dados:
+
             if not isinstance(leitura, dict):
                 continue
 
             maquina = leitura.get("maquina")
 
             if not maquina:
-                print(f"Leitura ignorada: campo 'maquina' ausente.")
+                print("Leitura ignorada: campo 'maquina' ausente.")
                 continue
 
-            cursor = conexao.execute("""
-                INSERT OR IGNORE INTO leituras (
-                    id_api,
-                    timestamp_api,
-                    maquina,
-                    temperatura,
-                    vibracao,
-                    pressao,
-                    producao,
-                    status,
-                    coletado_em,
-                    dados_json
+            parametros = {
+                "id_api": leitura.get("id"),
+                "timestamp_api": leitura.get("timestamp"),
+                "maquina": maquina,
+                "temperatura": leitura.get("temperatura"),
+                "vibracao": leitura.get("vibracao"),
+                "pressao": leitura.get("pressao"),
+                "producao": leitura.get("producao"),
+                "status": leitura.get("status"),
+                "coletado_em": coletado_em,
+                "dados_json": json.dumps(
+                    leitura,
+                    ensure_ascii=False
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                leitura.get("id"),
-                leitura.get("timestamp"),
-                maquina,
-                leitura.get("temperatura"),
-                leitura.get("vibracao"),
-                leitura.get("pressao"),
-                leitura.get("producao"),
-                leitura.get("status"),
-                coletado_em,
-                json.dumps(leitura, ensure_ascii=False)
-            ))
+            }
 
-            if cursor.rowcount == 1:
+            resultado = conexao.execute(query, parametros)
+
+            if resultado.rowcount == 1:
                 inseridos += 1
             else:
                 duplicados += 1
@@ -104,21 +130,32 @@ def coletar_dados():
 
 
 def iniciar_coleta():
-    criar_tabela()
+
+    try:
+        criar_tabela()
+        print("Tabela verificada/criada com sucesso.")
+
+    except SQLAlchemyError as erro:
+        print(f"Erro ao preparar o banco: {erro}")
+        return
 
     print("Coletor iniciado.")
     print(f"API: {API_URL}")
-    print(f"Banco: {DB_PATH}")
+    print("Banco: MySQL - Clever Cloud")
 
     while True:
+
         try:
             coletar_dados()
 
         except requests.RequestException as erro:
             print(f"Erro ao consultar a API: {erro}")
 
-        except (ValueError, TypeError, sqlite3.Error) as erro:
-            print(f"Erro ao processar ou salvar os dados: {erro}")
+        except (ValueError, TypeError, KeyError) as erro:
+            print(f"Erro ao processar os dados: {erro}")
+
+        except SQLAlchemyError as erro:
+            print(f"Erro ao salvar os dados: {erro}")
 
         time.sleep(5)
 
