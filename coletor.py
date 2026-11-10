@@ -9,7 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from database.connection import engine
 
 
-API_URL = "http://10.224.74.92:8080/maquinas"
+API_URL = "http://10.128.168.92:8080/maquinas"
 
 
 def criar_tabela():

@@ -4,3 +4,4 @@ requests
 SQLAlchemy
 PyMySQL
 python-dotenv
+plotly
