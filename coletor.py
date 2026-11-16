@@ -1,3 +1,4 @@
+
 import requests
 import json
 import time
@@ -9,17 +10,18 @@ from sqlalchemy.exc import SQLAlchemyError
 from database.connection import engine
 
 
-API_URL = "http://10.128.168.92:8080/maquinas"
+API_URL = "http://10.222.107.92:8080/maquinas"
+INTERVALO_COLETA = 5
 
 
 def criar_tabela():
-    """Cria a tabela de leituras caso ainda não exista."""
+    """Cria a tabela caso ainda não exista."""
 
     query = text("""
         CREATE TABLE IF NOT EXISTS leituras (
             id BIGINT AUTO_INCREMENT PRIMARY KEY,
-            id_api BIGINT,
-            timestamp_api VARCHAR(50),
+            id_api BIGINT NOT NULL,
+            timestamp_api VARCHAR(50) NOT NULL,
             maquina VARCHAR(100) NOT NULL,
             temperatura DOUBLE,
             vibracao DOUBLE,
@@ -42,22 +44,26 @@ def criar_tabela():
 
 
 def coletar_dados():
-    """Consulta a API e salva cada leitura na tabela."""
+    """Consulta a API e salva as leituras sem duplicar registros."""
 
     resposta = requests.get(API_URL, timeout=10)
     resposta.raise_for_status()
 
     resposta_api = resposta.json()
-    dados = resposta_api["dados"]
+    dados = resposta_api.get("dados")
 
     if not isinstance(dados, list):
-        raise ValueError("A API não retornou uma lista de leituras.")
+        raise ValueError(
+            "A API não retornou uma lista válida de leituras."
+        )
 
-    # MySQL DATETIME recebe um datetime sem informação de fuso.
-    coletado_em = datetime.now(timezone.utc).replace(tzinfo=None)
+    coletado_em = datetime.now(timezone.utc).replace(
+        tzinfo=None
+    )
 
     inseridos = 0
     duplicados = 0
+    ignorados = 0
 
     query = text("""
         INSERT IGNORE INTO leituras (
@@ -91,17 +97,25 @@ def coletar_dados():
         for leitura in dados:
 
             if not isinstance(leitura, dict):
+                ignorados += 1
                 continue
 
+            id_api = leitura.get("id")
+            timestamp_api = leitura.get("timestamp")
             maquina = leitura.get("maquina")
 
-            if not maquina:
-                print("Leitura ignorada: campo 'maquina' ausente.")
+            # Não permite inserir registros sem identificadores
+            if (
+                id_api is None
+                or timestamp_api is None
+                or not maquina
+            ):
+                ignorados += 1
                 continue
 
             parametros = {
-                "id_api": leitura.get("id"),
-                "timestamp_api": leitura.get("timestamp"),
+                "id_api": id_api,
+                "timestamp_api": str(timestamp_api),
                 "maquina": maquina,
                 "temperatura": leitura.get("temperatura"),
                 "vibracao": leitura.get("vibracao"),
@@ -111,11 +125,14 @@ def coletar_dados():
                 "coletado_em": coletado_em,
                 "dados_json": json.dumps(
                     leitura,
-                    ensure_ascii=False
-                )
+                    ensure_ascii=False,
+                ),
             }
 
-            resultado = conexao.execute(query, parametros)
+            resultado = conexao.execute(
+                query,
+                parametros,
+            )
 
             if resultado.rowcount == 1:
                 inseridos += 1
@@ -125,7 +142,8 @@ def coletar_dados():
     print(
         f"[{coletado_em}] "
         f"Inseridos: {inseridos} | "
-        f"Duplicados ignorados: {duplicados}"
+        f"Duplicados ignorados: {duplicados} | "
+        f"Registros inválidos: {ignorados}"
     )
 
 
@@ -142,6 +160,7 @@ def iniciar_coleta():
     print("Coletor iniciado.")
     print(f"API: {API_URL}")
     print("Banco: MySQL - Clever Cloud")
+    print(f"Intervalo: {INTERVALO_COLETA} segundos")
 
     while True:
 
@@ -157,7 +176,10 @@ def iniciar_coleta():
         except SQLAlchemyError as erro:
             print(f"Erro ao salvar os dados: {erro}")
 
-        time.sleep(5)
+        except Exception as erro:
+            print(f"Erro inesperado: {erro}")
+
+        time.sleep(INTERVALO_COLETA)
 
 
 if __name__ == "__main__":

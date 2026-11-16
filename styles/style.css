@@ -1,0 +1,430 @@
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+.stApp, .stApp p, .stApp label, .stApp h1, .stApp h2, .stApp h3, .stApp h4,
+.stApp button, .stApp input, .stApp textarea {
+    font-family: 'IBM Plex Sans', sans-serif;
+}
+
+/* Fundo geral */
+.stApp {
+    background: #F1F5F9;
+    color: #263B4A;
+}
+
+#MainMenu, footer {
+    visibility: hidden;
+}
+
+[data-testid="stHeader"] {
+    background: transparent;
+}
+
+.block-container {
+    padding-top: 1.4rem;
+    padding-bottom: 3rem;
+    max-width: 1500px;
+}
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+    background: #FFFFFF;
+    border-right: 1px solid #DCE3EA;
+}
+
+[data-testid="stSidebar"] > div {
+    background: #FFFFFF;
+}
+
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] span {
+    color: #475569;
+}
+
+.marca {
+    margin: .2rem 0 1.1rem 0;
+    padding-left: .7rem;
+    border-left: 3px solid #2196B5;
+}
+
+.marca-nome {
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1.15;
+    color: #263B4A;
+    letter-spacing: .01em;
+}
+
+.marca-sub {
+    font-size: .76rem;
+    color: #64748B;
+    margin-top: .1rem;
+}
+
+/* Controles com cantos retos */
+.stButton button,
+.stDownloadButton button {
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+[data-baseweb="select"] > div,
+[data-baseweb="input"],
+[data-baseweb="base-input"] {
+    border-radius: 3px;
+}
+
+[data-baseweb="tag"] {
+    border-radius: 2px;
+}
+
+[data-testid="stExpander"] {
+    border-radius: 3px;
+}
+
+/* Barra de título da página */
+.topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding-bottom: 1rem;
+    margin-bottom: 1.3rem;
+    border-bottom: 1px solid #DCE3EA;
+}
+
+.topo.alerta {
+    border-bottom: 2px solid #D13B48;
+}
+
+.topo h1 {
+    color: #263B4A;
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 0;
+    padding: 0;
+    letter-spacing: -.01em;
+}
+
+.topo p {
+    color: #64748B;
+    margin: .3rem 0 0 0;
+    font-size: .9rem;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    border-radius: 2px;
+    padding: .38rem .8rem;
+    font-size: .82rem;
+    font-weight: 600;
+    border: 1px solid;
+}
+
+.chip i {
+    width: 8px;
+    height: 8px;
+    display: inline-block;
+    background: currentColor;
+}
+
+.chip-ok {
+    color: #16804F;
+    border-color: #A7DCC1;
+    background: #EAF7EF;
+}
+
+.chip-warn {
+    color: #996500;
+    border-color: #F0D58A;
+    background: #FFF7DF;
+}
+
+.chip-crit {
+    color: #C02F3A;
+    border-color: #F0B7BC;
+    background: #FDEEEF;
+}
+
+/* Títulos de seção */
+.secao {
+    font-size: .95rem;
+    font-weight: 600;
+    color: #334155;
+    margin: 1.7rem 0 .8rem 0;
+    padding-bottom: .45rem;
+    border-bottom: 1px solid #DCE3EA;
+}
+
+/* Indicadores */
+.kpi {
+    background: #FFFFFF;
+    border: 1px solid #DCE3EA;
+    border-radius: 3px;
+    padding: 1rem 1.2rem;
+    border-top: 3px solid #2196B5;
+    height: 100%;
+}
+
+.kpi-crit {
+    border-top-color: #D13B48;
+}
+
+.kpi-warn {
+    border-top-color: #D99A16;
+}
+
+.kpi-ok {
+    border-top-color: #239B68;
+}
+
+.kpi-rot {
+    font-size: .8rem;
+    color: #64748B;
+    font-weight: 500;
+}
+
+.kpi-val {
+    font-size: 2.1rem;
+    font-weight: 600;
+    color: #263B4A;
+    line-height: 1.15;
+    margin-top: .2rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.01em;
+}
+
+.kpi-det {
+    font-size: .76rem;
+    color: #94A3B8;
+    margin-top: .15rem;
+    min-height: 1em;
+}
+
+/* Gráficos e blocos */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    background: #FFFFFF;
+    border-color: #DCE3EA;
+    border-radius: 3px;
+}
+
+/* Grade de máquinas */
+.grade {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 10px;
+}
+
+.tile {
+    background: #FFFFFF;
+    border: 1px solid #DCE3EA;
+    border-left: 4px solid #239B68;
+    border-radius: 3px;
+    padding: .8rem .95rem;
+}
+
+.tile-warn {
+    border-left-color: #D99A16;
+}
+
+.tile-crit {
+    border-left-color: #D13B48;
+    background: #FFF8F8;
+}
+
+.tile-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: .5rem;
+}
+
+.tile-nome {
+    font-weight: 600;
+    color: #263B4A;
+    font-size: .95rem;
+}
+
+.tile-estado {
+    font-size: .72rem;
+    font-weight: 600;
+}
+
+.tile-ok .tile-estado {
+    color: #16804F;
+}
+
+.tile-warn .tile-estado {
+    color: #996500;
+}
+
+.tile-crit .tile-estado {
+    color: #C02F3A;
+}
+
+.tile-sub {
+    font-size: .76rem;
+    color: #64748B;
+    margin-top: .1rem;
+}
+
+.tile-met {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .5rem;
+    margin-top: .75rem;
+    padding-top: .65rem;
+    border-top: 1px solid #E2E8F0;
+}
+
+.tile-met b {
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #263B4A;
+    font-variant-numeric: tabular-nums;
+}
+
+.tile-met span {
+    font-size: .68rem;
+    color: #64748B;
+}
+
+/* Máquina em alerta crítico */
+.maq {
+    background: #FFFFFF;
+    border: 1px solid #DCE3EA;
+    border-left: 4px solid #D13B48;
+    border-radius: 3px;
+    padding: 1.05rem 1.25rem;
+    margin-bottom: 12px;
+}
+
+.maq-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: .8rem;
+}
+
+.maq-nome {
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: #263B4A;
+}
+
+.maq-meta {
+    font-size: .78rem;
+    color: #64748B;
+    margin-top: .1rem;
+}
+
+.maq-status {
+    font-size: .74rem;
+    font-weight: 600;
+    background: #F1F5F9;
+    color: #475569;
+    border-radius: 2px;
+    padding: .2rem .55rem;
+    white-space: nowrap;
+}
+
+.alerta-linha {
+    border-top: 1px solid #E2E8F0;
+    margin-top: .8rem;
+    padding-top: .75rem;
+}
+
+.alerta-cab {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: .6rem;
+    flex-wrap: wrap;
+}
+
+.alerta-ind {
+    font-weight: 600;
+    color: #334155;
+    text-transform: capitalize;
+}
+
+.alerta-val {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #C02F3A;
+    margin-left: .35rem;
+}
+
+.pill {
+    font-size: .72rem;
+    font-weight: 600;
+    border-radius: 2px;
+    padding: .15rem .5rem;
+}
+
+.alerta-regra {
+    font-size: .8rem;
+    color: #64748B;
+    margin-top: .3rem;
+}
+
+.alerta-just {
+    font-size: .83rem;
+    color: #475569;
+    margin-top: .2rem;
+}
+
+/* Estado vazio */
+.vazio {
+    background: #FFFFFF;
+    border: 1px solid #B8DFC9;
+    border-left: 4px solid #239B68;
+    border-radius: 3px;
+    padding: 1.6rem 1.5rem;
+}
+
+.vazio b {
+    font-size: 1.05rem;
+    color: #16804F;
+}
+
+.vazio p {
+    color: #64748B;
+    margin: .35rem 0 0 0;
+}
+
+/* Rodapé */
+.rodape {
+    color: #94A3B8;
+    font-size: .76rem;
+    margin-top: 2.2rem;
+}
+
+/* Campos e filtros */
+.stTextInput input,
+.stNumberInput input,
+.stDateInput input,
+[data-baseweb="select"] > div {
+    background-color: #FFFFFF;
+    color: #263B4A;
+    border-color: #CBD5E1;
+}
+
+/* Botões */
+.stButton button,
+.stDownloadButton button {
+    background: #FFFFFF;
+    color: #263B4A;
+    border: 1px solid #CBD5E1;
+}
+
+.stButton button:hover,
+.stDownloadButton button:hover {
+    border-color: #2196B5;
+    color: #167B99;
+}

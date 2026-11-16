@@ -74,6 +74,105 @@ ALIASES = {
     "falhas": ("falhas", "falhas_acumuladas"),
     "consumo": ("consumo", "consumo_energetico", "potencia", "energia"),
 }
+# Faixas normais de operação por máquina e parâmetro.
+# None representa ausência de limite naquele sentido.
+# Os indicadores de inclusão definem se o extremo pertence à faixa normal.
+
+FAIXAS_NORMAIS = {
+    ("TORNO_CNC_01", "temperatura"): {
+        "min": None, "max": 62,
+        "min_inclusivo": False, "max_inclusivo": True,
+    },
+    ("TORNO_CNC_01", "vibracao"): {
+        "min": None, "max": 2.8,
+        "min_inclusivo": False, "max_inclusivo": True,
+    },
+    ("TORNO_CNC_01", "rotacao"): {
+        "min": 2900, "max": None,
+        "min_inclusivo": True, "max_inclusivo": False,
+    },
+    ("TORNO_CNC_01", "desgaste"): {
+        "min": None, "max": 60,
+        "min_inclusivo": False, "max_inclusivo": True,
+    },
+
+    ("PRENSA_HIDRAULICA_01", "pressao"): {
+        "min": 135, "max": None,
+        "min_inclusivo": True, "max_inclusivo": False,
+    },
+    ("PRENSA_HIDRAULICA_01", "temperatura"): {
+        "min": None, "max": 62,
+        "min_inclusivo": False, "max_inclusivo": True,
+    },
+    ("PRENSA_HIDRAULICA_01", "vibracao"): {
+        "min": None, "max": 2.5,
+        "min_inclusivo": False, "max_inclusivo": True,
+    },
+
+    ("ESTEIRA_01", "carga"): {
+        "min": None, "max": 85,
+        "min_inclusivo": False, "max_inclusivo": True,
+    },
+    ("ESTEIRA_01", "velocidade"): {
+        "min": 1.7, "max": None,
+        "min_inclusivo": True, "max_inclusivo": False,
+    },
+    ("ESTEIRA_01", "temperatura"): {
+        "min": None, "max": 44,
+        "min_inclusivo": False, "max_inclusivo": True,
+    },
+    ("ESTEIRA_01", "vibracao"): {
+        "min": None, "max": 3.0,
+        "min_inclusivo": False, "max_inclusivo": True,
+    },
+
+    ("ROBO_SOLDAGEM_01", "temperatura"): {
+        "min": None, "max": 75,
+        "min_inclusivo": False, "max_inclusivo": True,
+    },
+    ("ROBO_SOLDAGEM_01", "corrente"): {
+        "min": 16.5, "max": 20,
+        "min_inclusivo": True, "max_inclusivo": True,
+    },
+    ("ROBO_SOLDAGEM_01", "falhas"): {
+        "min": None, "max": 2,
+        "min_inclusivo": False, "max_inclusivo": True,
+    },
+
+    ("COMPRESSOR_01", "pressao"): {
+        "min": 7.5, "max": None,
+        "min_inclusivo": False, "max_inclusivo": False,
+    },
+    ("COMPRESSOR_01", "temperatura"): {
+        "min": None, "max": 75,
+        "min_inclusivo": False, "max_inclusivo": True,
+    },
+    ("COMPRESSOR_01", "vibracao"): {
+        "min": None, "max": 4.0,
+        "min_inclusivo": False, "max_inclusivo": True,
+    },
+    ("COMPRESSOR_01", "desgaste"): {
+        "min": None, "max": 60,
+        "min_inclusivo": False, "max_inclusivo": True,
+    },
+    ("COMPRESSOR_01", "consumo"): {
+        "min": None, "max": 8.0,
+        "min_inclusivo": False, "max_inclusivo": True,
+    },
+
+    ("EMBALADORA_01", "velocidade"): {
+        "min": 25, "max": 35,
+        "min_inclusivo": True, "max_inclusivo": True,
+    },
+    ("EMBALADORA_01", "temperatura"): {
+        "min": None, "max": 48,
+        "min_inclusivo": False, "max_inclusivo": True,
+    },
+    ("EMBALADORA_01", "falhas"): {
+        "min": None, "max": 2,
+        "min_inclusivo": False, "max_inclusivo": True,
+    },
+}
 
 PRIORIDADE = {"Normal": 0, "Atenção": 1, "Crítico": 2, "Manutenção": 3}
 

@@ -9,7 +9,8 @@ import streamlit as st
 from sqlalchemy import inspect, text
 
 from database.connection import engine
-from rules.regras_industriais import avaliar_maquinas, REGRAS, ALIASES
+from rules.regras_industriais import avaliar_maquinas, REGRAS, ALIASES, FAIXAS_NORMAIS
+from pathlib import Path
 
 # A conexão é feita com o MySQL remoto da Clever Cloud pelo engine.
 st.set_page_config(
@@ -41,106 +42,17 @@ ORDEM_GRAVIDADE = {
 # Classificações exibidas na tela de alertas críticos (ajuste se precisar).
 CLASSIFICACOES_CRITICAS = ("Sem comunicação", "Manutenção", "Crítico", "Diagnóstico combinado")
 
-CSS = """
-<style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+def carregar_css():
+    caminho_css = Path(__file__).resolve().parent / "styles" / "style.css"
 
-.stApp, .stApp p, .stApp label, .stApp h1, .stApp h2, .stApp h3, .stApp h4,
-.stApp button, .stApp input, .stApp textarea { font-family: 'IBM Plex Sans', sans-serif; }
+    with open(caminho_css, "r", encoding="utf-8") as arquivo:
+        css = arquivo.read()
 
-.stApp { background: #0E1318; color: #E6EBEF; }
-#MainMenu, footer { visibility: hidden; }
-[data-testid="stHeader"] { background: transparent; }
-.block-container { padding-top: 1.4rem; padding-bottom: 3rem; max-width: 1500px; }
-
-/* Sidebar */
-[data-testid="stSidebar"] { background: #0A0E12; border-right: 1px solid #222C35; }
-.marca { margin: .2rem 0 1.1rem 0; padding-left: .7rem; border-left: 3px solid #3FA7C9; }
-.marca-nome { font-weight: 700; font-size: 1rem; line-height: 1.15; color: #E6EBEF; letter-spacing: .01em; }
-.marca-sub { font-size: .76rem; color: #8796A3; margin-top: .1rem; }
-
-/* Controles com cantos retos */
-.stButton button, .stDownloadButton button { border-radius: 3px; font-weight: 600; }
-[data-baseweb="select"] > div, [data-baseweb="input"], [data-baseweb="base-input"] { border-radius: 3px; }
-[data-baseweb="tag"] { border-radius: 2px; }
-[data-testid="stExpander"] { border-radius: 3px; }
-
-/* Barra de título da página */
-.topo { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap;
-        padding-bottom: 1rem; margin-bottom: 1.3rem; border-bottom: 1px solid #26323D; }
-.topo.alerta { border-bottom: 2px solid #E5484D; }
-.topo h1 { color: #FFFFFF; font-size: 1.6rem; font-weight: 600; margin: 0; padding: 0; letter-spacing: -.01em; }
-.topo p { color: #8796A3; margin: .3rem 0 0 0; font-size: .9rem; }
-.chip { display: inline-flex; align-items: center; gap: .5rem; border-radius: 2px;
-        padding: .38rem .8rem; font-size: .82rem; font-weight: 600; border: 1px solid; }
-.chip i { width: 8px; height: 8px; display: inline-block; background: currentColor; }
-.chip-ok { color: #5FD39A; border-color: #1F5F43; background: rgba(61,184,122,.10); }
-.chip-warn { color: #F5C451; border-color: #6B4C0F; background: rgba(245,165,36,.10); }
-.chip-crit { color: #FF7B80; border-color: #7A2427; background: rgba(229,72,77,.12); }
-
-/* Títulos de seção */
-.secao { font-size: .95rem; font-weight: 600; color: #C9D3DB; margin: 1.7rem 0 .8rem 0;
-         padding-bottom: .45rem; border-bottom: 1px solid #26323D; }
-
-/* Indicadores */
-.kpi { background: #151C23; border: 1px solid #26323D; border-radius: 3px; padding: 1rem 1.2rem;
-       border-top: 3px solid #3FA7C9; height: 100%; }
-.kpi-crit { border-top-color: #E5484D; }
-.kpi-warn { border-top-color: #F5A524; }
-.kpi-ok { border-top-color: #3DB87A; }
-.kpi-rot { font-size: .8rem; color: #8796A3; font-weight: 500; }
-.kpi-val { font-size: 2.1rem; font-weight: 600; color: #FFFFFF; line-height: 1.15; margin-top: .2rem;
-           font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
-.kpi-det { font-size: .76rem; color: #6F7E8B; margin-top: .15rem; min-height: 1em; }
-
-/* Gráficos e blocos */
-[data-testid="stVerticalBlockBorderWrapper"] { background: #151C23; border-color: #26323D; border-radius: 3px; }
-
-/* Grade de máquinas */
-.grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
-.tile { background: #151C23; border: 1px solid #26323D; border-left: 4px solid #3DB87A;
-        border-radius: 3px; padding: .8rem .95rem; }
-.tile-warn { border-left-color: #F5A524; }
-.tile-crit { border-left-color: #E5484D; background: #1A1519; }
-.tile-topo { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
-.tile-nome { font-weight: 600; color: #FFFFFF; font-size: .95rem; }
-.tile-estado { font-size: .72rem; font-weight: 600; }
-.tile-ok .tile-estado { color: #5FD39A; }
-.tile-warn .tile-estado { color: #F5C451; }
-.tile-crit .tile-estado { color: #FF7B80; }
-.tile-sub { font-size: .76rem; color: #8796A3; margin-top: .1rem; }
-.tile-met { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; margin-top: .75rem;
-            padding-top: .65rem; border-top: 1px solid #222C35; }
-.tile-met b { display: block; font-size: 1.05rem; font-weight: 600; color: #E6EBEF;
-              font-variant-numeric: tabular-nums; }
-.tile-met span { font-size: .68rem; color: #6F7E8B; }
-
-/* Máquina em alerta crítico */
-.maq { background: #151C23; border: 1px solid #26323D; border-left: 4px solid #E5484D;
-       border-radius: 3px; padding: 1.05rem 1.25rem; margin-bottom: 12px; }
-.maq-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: .8rem; }
-.maq-nome { font-size: 1.08rem; font-weight: 600; color: #FFFFFF; }
-.maq-meta { font-size: .78rem; color: #8796A3; margin-top: .1rem; }
-.maq-status { font-size: .74rem; font-weight: 600; background: #222C35; color: #C9D3DB;
-              border-radius: 2px; padding: .2rem .55rem; white-space: nowrap; }
-.alerta-linha { border-top: 1px solid #222C35; margin-top: .8rem; padding-top: .75rem; }
-.alerta-cab { display: flex; justify-content: space-between; align-items: center; gap: .6rem; flex-wrap: wrap; }
-.alerta-ind { font-weight: 600; color: #E6EBEF; text-transform: capitalize; }
-.alerta-val { font-weight: 600; font-variant-numeric: tabular-nums; color: #FF7B80; margin-left: .35rem; }
-.pill { font-size: .72rem; font-weight: 600; border-radius: 2px; padding: .15rem .5rem; }
-.alerta-regra { font-size: .8rem; color: #8796A3; margin-top: .3rem; }
-.alerta-just { font-size: .83rem; color: #C9D3DB; margin-top: .2rem; }
-
-/* Estado vazio */
-.vazio { background: #151C23; border: 1px solid #1F5F43; border-left: 4px solid #3DB87A;
-         border-radius: 3px; padding: 1.6rem 1.5rem; }
-.vazio b { font-size: 1.05rem; color: #5FD39A; }
-.vazio p { color: #8796A3; margin: .35rem 0 0 0; }
-
-.rodape { color: #6F7E8B; font-size: .76rem; margin-top: 2.2rem; }
-</style>
-"""
-st.markdown(CSS, unsafe_allow_html=True)
+    st.markdown(
+        f"<style>{css}</style>",
+        unsafe_allow_html=True
+    )
+carregar_css()
 
 
 # ---------------------------------------------------------------------------
@@ -254,10 +166,18 @@ def calcular_alertas(df: pd.DataFrame) -> list[dict]:
 # ---------------------------------------------------------------------------
 # Componentes visuais
 # ---------------------------------------------------------------------------
-def formatar_numero(valor: float | int | None, casas: int = 0) -> str:
-    if valor is None or pd.isna(valor):
-        return "—"
+
+def formatar_numero(valor, casas=2):
+    if valor is None:
+        return "-"
+
+    try:
+        valor = float(str(valor).replace(",", "."))
+    except (ValueError, TypeError):
+        return str(valor)
+
     return f"{valor:,.{casas}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
 
 
 def tempo_desde(momento: pd.Timestamp | None) -> str:
@@ -295,19 +215,19 @@ def kpi(rotulo: str, valor: str, detalhe: str = "", tom: str = "neutro") -> str:
 
 def estilizar(fig, altura: int = 340, linhas: bool = True):
     fig.update_layout(
-        template="plotly_dark",
+        template="plotly_white",
         height=altura,
         colorway=PALETA,
-        font=dict(family="IBM Plex Sans, sans-serif", color="#C9D3DB", size=12),
+        font=dict(family="IBM Plex Sans, sans-serif", color="#475569", size=12),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         margin=dict(l=10, r=10, t=52, b=10),
-        title=dict(font=dict(size=14, color="#E6EBEF"), x=0),
+        title=dict(font=dict(size=14, color="#1E293B"), x=0),
         legend=dict(orientation="h", y=-0.22, title_text=""),
         hovermode="x unified" if linhas else "closest",
     )
-    fig.update_xaxes(gridcolor="#222C35", linecolor="#26323D", title_text=None)
-    fig.update_yaxes(gridcolor="#222C35", linecolor="#26323D")
+    fig.update_xaxes(gridcolor="#E2E8F0", linecolor="#CBD5E1", title_text=None)
+    fig.update_yaxes(gridcolor="#E2E8F0", linecolor="#CBD5E1")
     return fig
 
 
@@ -820,366 +740,226 @@ def pagina_geral() -> None:
 # ---------------------------------------------------------------------------
 # Página: Simulação
 # ---------------------------------------------------------------------------
+
 def pagina_simulacao() -> None:
     cabecalho(
-        "Simulação de máquinas",
-        "Configure limites personalizados por máquina e avalie o histórico.",
-        "Modo de simulação", "warn",
+        "Análise de médias",
+        "Médias históricas das grandezas em relação às faixas normais de operação.",
+        "Análise histórica",
+        "ok",
     )
 
-    st.info(
-        "A simulação utiliza o histórico do banco e os limites configurados abaixo. "
-        "Ela não altera as regras industriais originais nem envia comandos às máquinas."
+    if df.empty:
+        st.warning("Não existem dados disponíveis para análise.")
+        return
+
+    dados_base = df.copy()
+
+    # Padroniza as datas para evitar problemas de fuso horário
+    dados_base["_data_analise"] = pd.to_datetime(
+        dados_base["data_hora"],
+        errors="coerce",
+        utc=True,
     )
 
-    datas_validas = df["data_hora"].dropna()
+    datas_validas = dados_base["_data_analise"].dropna()
+
     if datas_validas.empty:
         st.warning("Não existem datas válidas no histórico.")
         return
 
-    maquinas_disponiveis = sorted(df["maquina"].dropna().unique().tolist())
-    maquinas_com_regras = {
-        regra.maquina for regra in REGRAS
-        if regra.maquina in maquinas_disponiveis
-    }
+    # Filtro de período
+    col_inicio, col_fim = st.columns(2)
 
-    # Uma linha por combinação máquina/parâmetro. As descrições vêm diretamente
-    # de regras_industriais.py, sem tentar converter regras assimétricas em faixas.
-    configuracoes = {}
-    for regra in REGRAS:
-        if regra.maquina not in maquinas_com_regras:
-            continue
-        chave = (regra.maquina, regra.parametro)
-        configuracoes.setdefault(
-            chave,
-            {"unidade": regra.unidade, "descricoes": []},
-        )
-        if regra.descricao not in configuracoes[chave]["descricoes"]:
-            configuracoes[chave]["descricoes"].append(regra.descricao)
-
-    aliases = ALIASES
-    linhas_config = []
-    for (maquina, parametro), regra_info in sorted(configuracoes.items()):
-        colunas_valor = aliases.get(parametro, (parametro,))
-        coluna_dados = next(
-            (
-                coluna for coluna in colunas_valor
-                if coluna in df.columns
-                and pd.to_numeric(df.loc[df["maquina"] == maquina, coluna], errors="coerce").notna().any()
-            ),
-            None,
-        )
-        if coluna_dados is None:
-            continue
-
-        linhas_config.append({
-            "Máquina": maquina,
-            "Parâmetro": parametro.capitalize(),
-            "Unidade": regra_info["unidade"],
-            "Limites pré-estabelecidos": " | ".join(regra_info["descricoes"]),
-            "Coluna_dados": coluna_dados,
-            "Limite mínimo": None,
-            "Limite máximo": None,
-            "Considerar": True,
-        })
-
-    if not linhas_config:
-        st.warning("Não foram encontradas regras aplicáveis às máquinas presentes no histórico.")
-        return
-
-    st.markdown('<div class="secao">Configuração dos limites por máquina</div>', unsafe_allow_html=True)
-    st.caption(
-        "Cada linha representa um parâmetro monitorado. Os limites pré-estabelecidos "
-        "são as regras atuais do projeto; preencha os limites personalizados e marque "
-        "quais parâmetros devem participar da simulação."
-    )
-
-    col_data_inicio, col_data_fim, col_status = st.columns([1, 1, 1])
-    with col_data_inicio:
+    with col_inicio:
         data_inicio = st.date_input(
             "Data inicial",
             value=datas_validas.min().date(),
-            min_value=datas_validas.min().date(),
-            max_value=datas_validas.max().date(),
-            key="sim_data_inicio_original",
+            key="analise_data_inicio",
         )
-    with col_data_fim:
+
+    with col_fim:
         data_fim = st.date_input(
             "Data final",
             value=datas_validas.max().date(),
-            min_value=datas_validas.min().date(),
-            max_value=datas_validas.max().date(),
-            key="sim_data_fim_original",
-        )
-    with col_status:
-        status_opcoes = ["Todos"] + sorted(df["status"].dropna().unique().tolist())
-        status_simulado = st.selectbox(
-            "Status operacional", status_opcoes, key="sim_status_original"
+            key="analise_data_fim",
         )
 
-    # Armazena a tabela editável na sessão para preservar os valores ao executar.
-    chave_editor = "tabela_config_simulacao"
-    if chave_editor not in st.session_state:
-        st.session_state[chave_editor] = pd.DataFrame(linhas_config)
-
-    configuracao_base = pd.DataFrame(linhas_config)
-    configuracao_editor = st.session_state[chave_editor]
-
-    # Se as máquinas/regras disponíveis mudarem, reconcilia as linhas sem apagar
-    # configurações já editadas para combinações que continuam existindo.
-    chave_linha = ["Máquina", "Parâmetro"]
-    if (
-        len(configuracao_editor) != len(configuracao_base)
-        or set(map(tuple, configuracao_editor[chave_linha].values))
-        != set(map(tuple, configuracao_base[chave_linha].values))
-    ):
-        valores_anteriores = {
-            (linha["Máquina"], linha["Parâmetro"]): linha
-            for linha in configuracao_editor.to_dict("records")
-        }
-        reconciliadas = []
-        for linha in linhas_config:
-            anterior = valores_anteriores.get((linha["Máquina"], linha["Parâmetro"]), {})
-            linha["Limite mínimo"] = anterior.get("Limite mínimo")
-            linha["Limite máximo"] = anterior.get("Limite máximo")
-            linha["Considerar"] = anterior.get("Considerar", True)
-            reconciliadas.append(linha)
-        configuracao_editor = pd.DataFrame(reconciliadas)
-        st.session_state[chave_editor] = configuracao_editor
-
-    configuracao_visivel = st.data_editor(
-        configuracao_editor.drop(columns=["Coluna_dados"]),
-        key="editor_limites_simulacao",
-        use_container_width=True,
-        hide_index=True,
-        num_rows="fixed",
-        column_order=[
-            "Máquina", "Parâmetro", "Unidade", "Limites pré-estabelecidos",
-            "Limite mínimo", "Limite máximo", "Considerar",
-        ],
-        disabled=[
-            "Máquina", "Parâmetro", "Unidade", "Limites pré-estabelecidos",
-        ],
-        column_config={
-            "Máquina": st.column_config.TextColumn("Máquina", width="medium"),
-            "Parâmetro": st.column_config.TextColumn("Parâmetro", width="small"),
-            "Unidade": st.column_config.TextColumn("Unidade", width="small"),
-            "Limites pré-estabelecidos": st.column_config.TextColumn(
-                "Limites pré-estabelecidos", width="large",
-                help="Descrições originais de regras_industriais.py.",
-            ),
-            "Limite mínimo": st.column_config.NumberColumn(
-                "Limite mínimo", help="Valor mínimo aceito no cenário simulado.",
-                format="%.3f",
-            ),
-            "Limite máximo": st.column_config.NumberColumn(
-                "Limite máximo", help="Valor máximo aceito no cenário simulado.",
-                format="%.3f",
-            ),
-            "Considerar": st.column_config.CheckboxColumn(
-                "Considerar", default=True,
-                help="Desmarque para ignorar este parâmetro na simulação.",
-            ),
-        },
-    )
-
-    executar = st.button(
-        "Executar simulação", type="primary", use_container_width=True
-    )
-
-    if executar:
-        config_com_coluna = configuracao_base[
-            ["Máquina", "Parâmetro", "Coluna_dados"]
-        ].merge(
-            configuracao_visivel,
-            on=["Máquina", "Parâmetro"],
-            how="left",
-        )
-        st.session_state["resultado_simulacao_config"] = {
-            "tabela": config_com_coluna.to_dict("records"),
-            "data_inicio": data_inicio,
-            "data_fim": data_fim,
-            "status": status_simulado,
-        }
-        st.session_state[chave_editor] = configuracao_visivel.merge(
-            configuracao_base[["Máquina", "Parâmetro", "Coluna_dados"]],
-            on=["Máquina", "Parâmetro"],
-            how="left",
-        )
-
-    config = st.session_state.get("resultado_simulacao_config")
-    if not config:
-        st.caption("Edite os limites, marque os parâmetros desejados e execute a simulação.")
+    if data_inicio > data_fim:
+        st.warning("A data inicial não pode ser posterior à data final.")
         return
 
-    if config["data_inicio"] > config["data_fim"]:
-        st.error("A data inicial não pode ser posterior à data final.")
-        return
-
-    regras_ativas = []
-    for regra in config["tabela"]:
-        if not regra.get("Considerar", False):
-            continue
-        limite_min = regra.get("Limite mínimo")
-        limite_max = regra.get("Limite máximo")
-        if pd.isna(limite_min) or pd.isna(limite_max):
-            continue
-        if float(limite_min) > float(limite_max):
-            st.error(
-                f"Na máquina {regra['Máquina']} / {regra['Parâmetro']}, "
-                "o limite mínimo não pode ser maior que o máximo."
-            )
-            return
-        regra["Limite mínimo"] = float(limite_min)
-        regra["Limite máximo"] = float(limite_max)
-        regras_ativas.append(regra)
-
-    if not regras_ativas:
-        st.warning(
-            "Nenhuma linha válida para simular. Marque pelo menos um parâmetro "
-            "e informe os limites mínimo e máximo."
-        )
-        return
-
-    inicio = pd.Timestamp(config["data_inicio"], tz="UTC")
-    fim = pd.Timestamp(config["data_fim"], tz="UTC") + pd.Timedelta(days=1)
-    dados_periodo = df[
-        df["data_hora"].ge(inicio) & df["data_hora"].lt(fim)
+    dados = dados_base[
+        dados_base["maquina"].isin(maquinas_selecionadas)
+        & (dados_base["_data_analise"].dt.date >= data_inicio)
+        & (dados_base["_data_analise"].dt.date <= data_fim)
     ].copy()
-    if config["status"] != "Todos":
-        dados_periodo = dados_periodo[dados_periodo["status"] == config["status"]]
 
-    resultados = []
-    for regra in regras_ativas:
-        maquina = regra["Máquina"]
-        parametro = regra["Parâmetro"]
-        coluna = regra["Coluna_dados"]
-        subset = dados_periodo[dados_periodo["maquina"] == maquina].copy()
-        if coluna not in subset.columns:
-            continue
-        subset["_valor_simulado"] = pd.to_numeric(subset[coluna], errors="coerce")
-        subset = subset.dropna(subset=["_valor_simulado", "data_hora"])
-        if subset.empty:
-            continue
-
-        subset["parametro_simulado"] = parametro
-        subset["unidade_simulada"] = regra["Unidade"]
-        subset["limite_minimo_simulado"] = regra["Limite mínimo"]
-        subset["limite_maximo_simulado"] = regra["Limite máximo"]
-        subset["resultado_simulacao"] = subset["_valor_simulado"].between(
-            regra["Limite mínimo"], regra["Limite máximo"], inclusive="both"
-        ).map({True: "Dentro dos limites", False: "Fora dos limites"})
-        resultados.append(subset)
-
-    if not resultados:
-        st.warning("Não há leituras no período selecionado para os parâmetros configurados.")
+    if dados.empty:
+        st.info("Não existem leituras para os filtros selecionados.")
         return
 
-    dados_simulados = pd.concat(resultados, ignore_index=True)
-    fora = dados_simulados[
-        dados_simulados["resultado_simulacao"] == "Fora dos limites"
-    ].copy()
-    dentro = len(dados_simulados) - len(fora)
-    percentual_fora = len(fora) / len(dados_simulados) * 100
+    # DataFrames dos três cenários
+    resultados = {
+        "Abaixo do limite": [],
+        "Acima do limite": [],
+        "Dentro dos limites": [],
+    }
 
-    st.markdown('<div class="secao">Resultado da simulação</div>', unsafe_allow_html=True)
-    colunas_kpi = st.columns(4)
-    indicadores_kpi = [
-        ("Leituras analisadas", formatar_numero(len(dados_simulados)), "", "neutro"),
-        ("Dentro dos limites", formatar_numero(dentro), "leituras aprovadas", "ok"),
-        ("Fora dos limites", formatar_numero(len(fora)), "leituras fora da faixa", "crit" if len(fora) else "ok"),
-        ("% fora dos limites", f"{percentual_fora:.1f}%".replace(".", ","), "no período selecionado",
-         "crit" if percentual_fora else "ok"),
-    ]
-    for coluna, (rotulo, valor, detalhe, tom) in zip(colunas_kpi, indicadores_kpi):
-        coluna.markdown(kpi(rotulo, valor, detalhe, tom), unsafe_allow_html=True)
+    # Percorre todas as máquinas e grandezas cadastradas
+    for (maquina, parametro), faixa in FAIXAS_NORMAIS.items():
 
-    secao("Resultado por máquina e parâmetro")
-    resumo = (
-        dados_simulados.groupby(["maquina", "parametro_simulado", "resultado_simulacao"])
-        .size().unstack(fill_value=0).reset_index()
-    )
-    for coluna in ("Dentro dos limites", "Fora dos limites"):
-        if coluna not in resumo.columns:
-            resumo[coluna] = 0
-    st.dataframe(resumo, use_container_width=True, hide_index=True)
+        if maquina not in maquinas_selecionadas:
+            continue
 
-    secao("Comportamento dos indicadores")
-    col_grafico, col_resumo = st.columns([1.5, 1])
-    with col_grafico, st.container(border=True):
-        fig = px.line(
-            dados_simulados.sort_values("data_hora"),
-            x="data_hora",
-            y="_valor_simulado",
-            color="maquina",
-            line_dash="parametro_simulado",
-            title="Evolução dos indicadores por máquina",
-            labels={
-                "data_hora": "Data/hora",
-                "_valor_simulado": "Valor medido",
-                "maquina": "Máquina",
-                "parametro_simulado": "Parâmetro",
-            },
-        )
-        st.plotly_chart(estilizar(fig, 340), use_container_width=True)
-
-    with col_resumo, st.container(border=True):
-        resumo_grafico = (
-            dados_simulados.groupby(["maquina", "resultado_simulacao"])
-            .size().reset_index(name="leituras")
-        )
-        fig_resumo = px.bar(
-            resumo_grafico,
-            x="maquina",
-            y="leituras",
-            color="resultado_simulacao",
-            barmode="stack",
-            title="Leituras por máquina",
-            labels={
-                "maquina": "Máquina",
-                "leituras": "Leituras",
-                "resultado_simulacao": "Resultado",
-            },
-            color_discrete_map={
-                "Dentro dos limites": "#3DB87A",
-                "Fora dos limites": "#E5484D",
-            },
-        )
-        st.plotly_chart(estilizar(fig_resumo, 340, linhas=False), use_container_width=True)
-
-    secao("Leituras fora dos limites")
-    if fora.empty:
-        st.markdown(
-            '<div class="vazio"><b>Nenhuma leitura fora dos limites</b>'
-            "<p>Todas as leituras analisadas ficaram dentro das faixas configuradas.</p></div>",
-            unsafe_allow_html=True,
-        )
-    else:
-        colunas_tabela = [
-            "data_hora", "maquina", "parametro_simulado", "_valor_simulado",
-            "limite_minimo_simulado", "limite_maximo_simulado", "resultado_simulacao",
+        dados_maquina = dados[
+            dados["maquina"] == maquina
         ]
-        tabela = fora[colunas_tabela].sort_values("data_hora", ascending=False).copy()
-        tabela["data_hora"] = tabela["data_hora"].dt.strftime("%d/%m/%Y %H:%M:%S UTC")
-        tabela = tabela.rename(columns={
-            "data_hora": "Data/hora",
-            "maquina": "Máquina",
-            "parametro_simulado": "Parâmetro",
-            "_valor_simulado": "Valor medido",
-            "limite_minimo_simulado": "Limite mínimo",
-            "limite_maximo_simulado": "Limite máximo",
-            "resultado_simulacao": "Resultado",
-        })
-        st.dataframe(tabela, use_container_width=True, hide_index=True)
 
-    exportar = dados_simulados.sort_values("data_hora", ascending=False).copy()
-    exportar["data_hora"] = exportar["data_hora"].dt.strftime("%d/%m/%Y %H:%M:%S UTC")
-    st.download_button(
-        "Exportar simulação em CSV",
-        data=exportar.to_csv(index=False).encode("utf-8-sig"),
-        file_name="simulacao_maquinas.csv",
-        mime="text/csv",
-    )
+        if dados_maquina.empty:
+            continue
+
+        # Localiza a coluna correspondente ao parâmetro
+        aliases = ALIASES.get(parametro, (parametro,))
+
+        coluna = next(
+            (
+                c for c in aliases
+                if c in dados.columns
+                and pd.to_numeric(
+                    dados_maquina[c],
+                    errors="coerce",
+                ).notna().any()
+            ),
+            None,
+        )
+
+        if coluna is None:
+            continue
+
+        leituras = pd.to_numeric(
+            dados_maquina[coluna],
+            errors="coerce",
+        ).dropna()
+
+        if leituras.empty:
+            continue
+
+        # Classifica as leituras conforme os limites normais
+        abaixo = pd.Series(False, index=leituras.index)
+        acima = pd.Series(False, index=leituras.index)
+
+        minimo = faixa["min"]
+        maximo = faixa["max"]
+
+        if minimo is not None:
+            abaixo = (
+                leituras.lt(minimo)
+                if faixa["min_inclusivo"]
+                else leituras.le(minimo)
+            )
+
+        if maximo is not None:
+            acima = (
+                leituras.gt(maximo)
+                if faixa["max_inclusivo"]
+                else leituras.ge(maximo)
+            )
+
+        dentro = ~(abaixo | acima)
+
+        cenarios = {
+            "Abaixo do limite": leituras[abaixo],
+            "Acima do limite": leituras[acima],
+            "Dentro dos limites": leituras[dentro],
+        }
+
+        # Recupera a produção da mesma máquina
+        if "producao" in dados.columns:
+            producao = pd.to_numeric(
+                dados_maquina["producao"],
+                errors="coerce",
+            )
+        else:
+            producao = pd.Series(
+                float("nan"),
+                index=dados_maquina.index,
+            )
+
+        unidade = next(
+            (
+                r.unidade for r in REGRAS
+                if r.maquina == maquina
+                and r.parametro == parametro
+            ),
+            "",
+        )
+
+        # Calcula os resultados de cada cenário
+        for nome, valores in cenarios.items():
+
+            if valores.empty:
+                continue
+
+            # Produção correspondente às mesmas leituras
+            producao_cenario = producao.reindex(
+                valores.index
+            ).dropna()
+
+            resultados[nome].append({
+                "Máquina": maquina,
+                "Grandeza": parametro.capitalize(),
+                "Unidade": unidade,
+                "Quantidade de leituras": len(valores),
+                "Média da grandeza": valores.mean(),
+                "Média produzida": (
+                    producao_cenario.mean()
+                    if not producao_cenario.empty
+                    else None
+                ),
+            })
+
+    # Exibição dos três DataFrames
+    nomes = [
+        "Abaixo do limite",
+        "Acima do limite",
+        "Dentro dos limites",
+    ]
+
+    for nome in nomes:
+
+        secao(nome)
+
+        tabela = pd.DataFrame(resultados[nome])
+
+        if tabela.empty:
+            st.info("Nenhuma leitura encontrada neste cenário.")
+            continue
+
+        tabela["Média da grandeza"] = (
+            tabela["Média da grandeza"].round(2)
+        )
+
+        tabela["Média produzida"] = (
+            tabela["Média produzida"].round(2)
+        )
+
+        st.dataframe(
+            tabela,
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        st.download_button(
+            f"Exportar {nome.lower()}",
+            data=tabela.to_csv(
+                index=False
+            ).encode("utf-8-sig"),
+            file_name=f"{nome.lower().replace(' ', '_')}.csv",
+            mime="text/csv",
+            key=f"exportar_{nome}",
+        )
+
 
 
 if st.session_state.pagina == "criticos":
