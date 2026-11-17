@@ -10,7 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from database.connection import engine
 
 
-API_URL = "http://10.222.107.92:8080/maquinas"
+API_URL = "http://10.120.86.92:8080/maquinas"
 INTERVALO_COLETA = 5
 
 
